@@ -1,2 +1,3 @@
 # tinyshell
-Tiny shell written in C
+Tiny UNIX shell written in C
+של ננסי בסי
