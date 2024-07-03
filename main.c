@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
-// clear builtin command
-#define clear_shell() printf("\033[H\033[J]")
-#define MAX_INPUT_BUFFER 512 // size of user input buffer
+#define clear_shell() printf("\033[H\033[J]") // clear builtin command
+#define MAX_INPUT_BUFFER 1024 // size of user input buffer
 const char PROMPT[] = "$ ";
+
+// Function prototypes
 
 int main(int argc, char **argv)
 {
@@ -14,12 +16,8 @@ int main(int argc, char **argv)
     char c;
     while (1)
     {
-        printf(PROMPT); 
-        if (fgets(input, sizeof(input), stdin) == NULL)
-        {
-            printf("^D\n");
-            return 0;
-        }
+        printf(PROMPT);
+        fgets(input, sizeof(input), stdin);
 
         // Clear the stdin buffer, so that it does not wrap around
         if (strcspn(input, "\n") >= MAX_INPUT_BUFFER-1)
@@ -33,22 +31,7 @@ int main(int argc, char **argv)
         input[strcspn(input, "\n")] = '\0';
 
         // TEMP: print prompt + length
-        printf("input of length %li: %s\n", strlen(input), input);
+        printf("your input of length %li: %s\n", strlen(input), input);
     }
     return 0;
 }
-
-/*
-void handle_sig(int sig)
-{
-    switch (sig)
-    {
-        case 2:
-            printf("hello\n");
-            break;
-        default:
-            return;
-            break;
-    }
-}
-*/
