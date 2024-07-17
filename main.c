@@ -11,13 +11,14 @@ const char PROMPT[] = "$ ";
 // handle signals
 void sigint_handler(int sig) { printf("\n"); }
 
-// get space seperated string returns into **parsed_str
-void parse_spaces_args(char *str, char **parsed_str);
+// get space seperated string into **parsed_str, returns number of args
+int parse_spaces_args(char *str, char **parsed_str);
 
-int main(int argc, char **argv)
+int main(void)
 {
     char input[MAX_INPUT_BUFFER]; // raw input
-    char *args[MAX_INPUT_BUFFER]; // space seperated input
+    char *argv[MAX_INPUT_BUFFER]; // space seperated input
+    int argc;                     // amount of arguments
     char c;                       // temporary char
     int pid, stat;                // process id, command exit code
 
@@ -43,17 +44,26 @@ int main(int argc, char **argv)
         if (strlen(input) == 0) continue;
 
         // parse spaces
-        parse_spaces_args(input, args);
-        /*for (int i=0; args[i] != NULL; i++) {
-            printf("%s\n", args[i]);
+        argc = parse_spaces_args(input, argv);
+        /*for (int i=0; argv[i] != NULL; i++) {
+            printf("%s\n", argv[i]);
         } */
+
+        // exit builtin
+        if (strcmp("exit", argv[0]) == 0)
+        {
+            if (argc > 1)
+                exit(atoi(argv[1]));
+            else
+                exit(EXIT_SUCCESS);
+        }
 
         // fork and execute command from PATH with execvp()
         pid = fork();
         switch (pid) {
             case 0:
-                if (execvp(args[0], args) == -1)
-                    perror(args[0]);
+                if (execvp(argv[0], argv) == -1)
+                    perror(argv[0]);
                 exit(EXIT_FAILURE);
             case -1:
                 perror("could not start program\n");
@@ -70,13 +80,24 @@ int main(int argc, char **argv)
 }
 
 // parse space seperated arguments
-void parse_spaces_args(char *str, char **parsed_str) {
+int parse_spaces_args(char *str, char **parsed_str) {
     // if (strlen(str) < 1) {
         // parsed_str = NULL;
         // return;
     // }
 
-    for (int i=0; i<1 || parsed_str[i-1] != NULL; i++) {
+    int count = 0;
+
+    for (int i=0; ; i++) {
         parsed_str[i] = strsep(&str, " ");
+
+        if (parsed_str[i] != NULL) {
+            count++;
+        }
+        else {
+            // reached end of string
+            break;
+        }
     }
+    return count;
 }
