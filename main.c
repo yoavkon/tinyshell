@@ -57,6 +57,19 @@ int main(void)
             else
                 exit(EXIT_SUCCESS);
         }
+        else if (strcmp("cd", argv[0]) == 0) {
+
+            if (argc < 2) {
+                if (chdir(getenv("HOME")) != 0)
+                    perror(getenv("HOME"));
+            }
+            else {
+                if (chdir(argv[1]) != 0)
+                    perror(argv[1]);
+            }
+
+            continue;
+        }
 
         // fork and execute command from PATH with execvp()
         pid = fork();
