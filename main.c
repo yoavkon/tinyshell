@@ -18,12 +18,15 @@ int main(void)
 {
     char input[MAX_INPUT_BUFFER]; // raw input
     char *argv[MAX_INPUT_BUFFER]; // space seperated input
+    char cwd[MAX_INPUT_BUFFER];   // current working directory
     int argc;                     // amount of arguments
     char c;                       // temporary char
     int pid, stat;                // process id, command exit code
 
     while (1)
     {
+        getcwd(cwd, MAX_INPUT_BUFFER);
+        setenv("PWD", cwd, 1);
         printf(PROMPT); 
         memset(input, '\0', MAX_INPUT_BUFFER);
         if (fgets(input, sizeof(input), stdin) == NULL) {
