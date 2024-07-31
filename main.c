@@ -85,7 +85,6 @@ int main(void)
 
             free(varname);
             free(temp);
-            // break; // TEMP
             env_name_index = find_char_index(input, '$');
         }
 
