@@ -145,11 +145,6 @@ int main(void)
 
 // parse space seperated arguments
 int parse_spaces_args(char *str, char **parsed_str) {
-    // if (strlen(str) < 1) {
-        // parsed_str = NULL;
-        // return;
-    // }
-
     int count = 0;
 
     for (int i=0; ; i++) {
