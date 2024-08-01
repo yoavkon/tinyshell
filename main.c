@@ -9,9 +9,6 @@
 #define MAX_INPUT_BUFFER 512 // size of user input buffer
 const char PROMPT[] = "$ ";
 
-// handle signals
-void sigint_handler(int sig) { printf("\n"); }
-
 // get space seperated string into **parsed_str, returns number of args
 int parse_spaces_args(char *str, char **parsed_str);
 
