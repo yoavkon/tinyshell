@@ -90,9 +90,6 @@ int main(void)
 
         // parse spaces
         argc = parse_spaces_args(input, argv);
-        /*for (int i=0; argv[i] != NULL; i++) {
-            printf("%s\n", argv[i]);
-        } */
 
         // exit builtin
         if (strcmp("exit", argv[0]) == 0)
