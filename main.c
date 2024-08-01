@@ -127,9 +127,15 @@ int main(void)
                 perror("could not start program\n");
                 exit(EXIT_FAILURE);
             default:
+                // wait until child finishes
                 wait(&stat);
-                if (stat != 0)
-                    printf("command exited with: %i\n", WEXITSTATUS(stat));
+
+                // update "$?" environment variable
+                char *cmdexitcode = malloc(sizeof(char)*3);
+                sprintf(cmdexitcode, "%i", WEXITSTATUS(stat));
+                setenv("?", cmdexitcode, 1);
+                free(cmdexitcode);
+
                 break;
         }
 
