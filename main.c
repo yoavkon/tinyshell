@@ -12,9 +12,6 @@ const char PROMPT[] = "$ ";
 // get space seperated string into **parsed_str, returns number of args
 int parse_spaces_args(char *str, char **parsed_str);
 
-// get index of char in string
-int find_char_index(const char *str, const char c);
-            
 // replace word in a string
 char *replace_str(char *str, const char *substr_old, const char *substr_new);
 
@@ -53,8 +50,8 @@ int main(void)
         if (strlen(input) == 0) continue;
 
         // handle environment variables
-        int env_name_index = find_char_index(input, '$');
-        while (env_name_index != -1) // iterate over every instance of '$'
+        int env_name_index = (int)(strchr(input, '$') - input);
+        while (strchr(input, '$') != NULL) // iterate over every instance of '$'
         {
             // get the name of the variable
             char *start = &input[env_name_index];
@@ -82,7 +79,7 @@ int main(void)
 
             free(varname);
             free(temp);
-            env_name_index = find_char_index(input, '$');
+            env_name_index = (int)(strchr(input, '$') - input);
         }
 
         // parse spaces
@@ -126,6 +123,11 @@ int main(void)
 
                 // update "$?" environment variable
                 char *cmdexitcode = malloc(sizeof(char)*3);
+                if (cmdexitcode == NULL)
+                {
+                    perror("malloc error");
+                    exit(1);
+                }
                 sprintf(cmdexitcode, "%i", WEXITSTATUS(stat));
                 setenv("?", cmdexitcode, 1);
                 free(cmdexitcode);
@@ -153,17 +155,6 @@ int parse_spaces_args(char *str, char **parsed_str) {
         }
     }
     return count;
-}
-
-// find the index of a char in a string, return -1 if not found
-int find_char_index(const char *str, const char c)
-{
-    for (int i=0; i<strlen(str); i++)
-    {
-        if (str[i] == c)
-            return i;
-    }
-    return -1;
 }
 
 char *replace_str(char *str, const char *substr_old, const char *substr_new)
