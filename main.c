@@ -9,6 +9,9 @@
 #define MAX_INPUT_BUFFER 512 // size of user input buffer
 const char PROMPT[] = "$ ";
 
+// update "$?"
+void set_env_exit_code(unsigned int exit_code);
+
 // get space seperated string into **parsed_str, returns number of args
 int parse_spaces_args(char *str, char **parsed_str);
 
@@ -95,14 +98,18 @@ int main(void)
         }
         else if (strcmp("cd", argv[0]) == 0) {
 
+            unsigned int exit_code;
             if (argc < 2) {
-                if (chdir(getenv("HOME")) != 0)
+                exit_code = -chdir(getenv("HOME"));
+                if (exit_code != 0)
                     perror(getenv("HOME"));
             }
             else {
-                if (chdir(argv[1]) != 0)
+                exit_code = -chdir(argv[1]);
+                if (exit_code != 0)
                     perror(argv[1]);
             }
+            set_env_exit_code(exit_code);
 
             continue;
         }
@@ -122,15 +129,7 @@ int main(void)
                 wait(&stat);
 
                 // update "$?" environment variable
-                char *cmdexitcode = malloc(sizeof(char)*3);
-                if (cmdexitcode == NULL)
-                {
-                    perror("malloc error");
-                    exit(1);
-                }
-                sprintf(cmdexitcode, "%i", WEXITSTATUS(stat));
-                setenv("?", cmdexitcode, 1);
-                free(cmdexitcode);
+                set_env_exit_code(WEXITSTATUS(stat));
 
                 break;
         }
@@ -197,4 +196,22 @@ char *replace_str(char *str, const char *substr_old, const char *substr_new)
     for (int i=0; i<pos; i++) res[i] = str[i];
 
     return res;
+}
+
+// update "$?" environment variable (exit code)
+void set_env_exit_code(unsigned int exit_code)
+{
+    char *cmdexitcode = malloc(sizeof(char)*3); // 3 digits
+    if (cmdexitcode == NULL)
+    {
+        perror("malloc error");
+        exit(1);
+    }
+
+    // convert to string
+    sprintf(cmdexitcode, "%u", exit_code);
+
+    // set environment variable
+    setenv("?", cmdexitcode, 1);
+    free(cmdexitcode);
 }
