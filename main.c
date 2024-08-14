@@ -19,6 +19,9 @@ int parse_spaces_args(char *str, char **parsed_str);
 // replace word in a string
 char *replace_str(char *str, const char *substr_old, const char *substr_new);
 
+// handle environment variables
+void handle_env_var(char *input);
+
 int main(void)
 {
     char input[MAX_INPUT_BUFFER]; // raw input
@@ -30,6 +33,9 @@ int main(void)
     char hostname[MAX_HOSTNAME_SIZE];
     gethostname(hostname, sizeof(hostname));
     char *username = getlogin();
+
+    // default exit code
+    set_env_exit_code(0);
 
     while (1)
     {
@@ -47,7 +53,7 @@ int main(void)
         }
 
         // print user prompt
-        printf("%s@%s:%s $ ", username, hostname, cwd); 
+        printf("%s@%s:%s$ ", username, hostname, cwd); 
         memset(input, '\0', MAX_INPUT_BUFFER);
         if (fgets(input, sizeof(input), stdin) == NULL) {
             printf("\n");
@@ -55,9 +61,9 @@ int main(void)
         }
 
         // clear the stdin buffer, so that it does not wrap around
-        char c;
         if (strcspn(input, "\n") >= MAX_INPUT_BUFFER-1)
         {
+            char c;
             do {
                 c = getchar();
             } while (c != '\n' && c != EOF);
@@ -68,38 +74,19 @@ int main(void)
 
         // ignore empty command
         if (strlen(input) == 0) continue;
+        
+        // handle tilde sign '~'
+        if (strchr(input, '~') != NULL)
+        {
+            char *tmp = replace_str(input, "~", getenv("HOME"));
+            strncpy(input, tmp, MAX_INPUT_BUFFER);
+            free(tmp);
+        }
 
         // handle environment variables
-        int env_name_index = (int)(strchr(input, '$') - input);
         while (strchr(input, '$') != NULL) // iterate over every instance of '$'
         {
-            // get the name of the variable
-            char *start = &input[env_name_index];
-            char *end = start+1;
-            while (isalnum(*(end+1)) || *(end+1) == '_') end++;
-            size_t length = end-start+1;
-
-            char *varname = malloc(sizeof(char)*(length+1));
-            if (varname == NULL)
-            {
-                perror("malloc error");
-                exit(1);
-            }
-            strncpy(varname, start, length);
-            varname[length] = '\0';
-
-            // get the value of the environment variable
-            char *value = getenv(varname+1); // varname without '$'
-            if (value == NULL) value = "\0";
-
-            // replace the variable name with its value
-            char *temp = replace_str(input, varname, value);
-            strncpy(input, temp, MAX_INPUT_BUFFER);
-            input[MAX_INPUT_BUFFER-1] = '\0';
-
-            free(varname);
-            free(temp);
-            env_name_index = (int)(strchr(input, '$') - input);
+            handle_env_var(input);
         }
 
         // parse spaces
@@ -180,6 +167,9 @@ char *replace_str(char *str, const char *substr_old, const char *substr_new)
     int new_length = strlen(substr_new);
     int strlength = strlen(str);
     int reslength = strlength - old_length + new_length;
+    
+    if (old_length == 0 || strlength == 0)
+        exit(1);
 
     char *res = malloc(sizeof(char)*(reslength + 1));
 
@@ -231,4 +221,35 @@ void set_env_exit_code(unsigned int exit_code)
     // set environment variable
     setenv("?", cmdexitcode, 1);
     free(cmdexitcode);
+}
+
+// replace the first environment variables with its values
+void handle_env_var(char *input)
+{
+    // get the name of the variable
+    char *start = &input[(int)(strchr(input, '$') - input)];
+    char *end = start+1;
+    while (isalnum(*(end+1)) || *(end+1) == '_') end++;
+    size_t length = end-start+1;
+    
+    char *varname = malloc(sizeof(char)*(length+1));
+    if (varname == NULL)
+    {
+        perror("malloc error");
+        exit(1);
+    }
+    strncpy(varname, start, length);
+    varname[length] = '\0';
+    
+    // get the value of the environment variable
+    char *value = getenv(varname+1); // varname without '$'
+    if (value == NULL) value = "\0";
+    
+    // replace the variable name with its value
+    char *temp = replace_str(input, varname, value);
+    strncpy(input, temp, MAX_INPUT_BUFFER);
+    input[MAX_INPUT_BUFFER-1] = '\0';
+    
+    free(varname);
+    free(temp);
 }
