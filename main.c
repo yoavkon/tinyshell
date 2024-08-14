@@ -6,8 +6,9 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-#define MAX_INPUT_BUFFER 512 // size of user input buffer
-const char PROMPT[] = "$ ";
+#define MAX_INPUT_BUFFER 512  // size of user input buffer
+#define MAX_HOSTNAME_SIZE 128 // size of HOST environment variable
+#define MAX_CWD_SIZE 1024     // size of PWD environment variable
 
 // update "$?"
 void set_env_exit_code(unsigned int exit_code);
@@ -22,15 +23,31 @@ int main(void)
 {
     char input[MAX_INPUT_BUFFER]; // raw input
     char *argv[MAX_INPUT_BUFFER]; // space seperated input
-    char cwd[MAX_INPUT_BUFFER];   // current working directory
     int argc;                     // amount of arguments
     int pid, stat;                // process id, command exit code
 
+    // get hostname and username
+    char hostname[MAX_HOSTNAME_SIZE];
+    gethostname(hostname, sizeof(hostname));
+    char *username = getlogin();
+
     while (1)
     {
-        getcwd(cwd, MAX_INPUT_BUFFER);
+        // update current working directory
+        char cwd[MAX_CWD_SIZE];
+        getcwd(cwd, MAX_CWD_SIZE);
         setenv("PWD", cwd, 1);
-        printf(PROMPT); 
+
+        // replace /home/USER with '~'
+        if (strstr(cwd, getenv("HOME")) != NULL)
+        {
+            char *tmp = replace_str(cwd, getenv("HOME"), "~");
+            strncpy(cwd, tmp, MAX_CWD_SIZE);
+            free(tmp);
+        }
+
+        // print user prompt
+        printf("%s@%s:%s $ ", username, hostname, cwd); 
         memset(input, '\0', MAX_INPUT_BUFFER);
         if (fgets(input, sizeof(input), stdin) == NULL) {
             printf("\n");
